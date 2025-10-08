@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "5.97.0"
     }
   }
@@ -14,7 +14,7 @@ provider "aws" {
 
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "Add-bucket-name"
+  bucket = "eks-bucket-mq" # Change to a unique bucket name
 
   lifecycle {
     prevent_destroy = false
@@ -22,14 +22,13 @@ resource "aws_s3_bucket" "terraform_state" {
 }
 
 
-terraform {  
-  backend "s3" {  
-    bucket       = "Add-bucket-name"  
-    key          = "Add-path-of-terraform-state-file"
-    region       = "us-east-1"  
-    encrypt      = true  
-    use_lockfile = true  #S3 native locking
-  }  
+terraform {
+  backend "s3" {
+    bucket = "eks-bucket-mq"
+    key    = "dev/terraform-state-file"
+    region = "us-east-1"
+
+  }
 }
 
 
@@ -50,9 +49,9 @@ module "eks" {
   source = "./modules/eks"
 
   region           = var.region
-  eks_cluster_name = var.eks_cluster_name         # Name of the EKS cluster to create
-  cluster_version  = var.cluster_version          # Kubernetes version for the EKS control plane
-  vpc_id           = module.vpc.vpc_id            # Use VPC ID output from the VPC module
+  eks_cluster_name = var.eks_cluster_name          # Name of the EKS cluster to create
+  cluster_version  = var.cluster_version           # Kubernetes version for the EKS control plane
+  vpc_id           = module.vpc.vpc_id             # Use VPC ID output from the VPC module
   subnet_id        = module.vpc.private_subnet_ids # Use private subnet IDs from the VPC module
-  node_groups      = var.node_groups              # Map of node group configurations to launch worker nodes
+  node_groups      = var.node_groups               # Map of node group configurations to launch worker nodes
 }
