@@ -67,4 +67,22 @@ variable "node_groups" {
   )
 }
 
+variable "node_instance_types" {
+  type        = list(string)
+  description = "List of EC2 instance types for the EKS node group"
+}
 
+variable "desired_capacity" {
+  type        = number
+  description = "Desired number of worker nodes"
+}
+
+variable "min_capacity" {
+  type        = number
+  description = "Minimum number of worker nodes"
+}
+
+variable "max_capacity" {
+  type        = number
+  description = "Maximum number of worker nodes"
+}
