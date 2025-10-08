@@ -14,7 +14,7 @@ provider "aws" {
 
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "Add-bucket-name"
+  bucket = "eks-bucket-mq"
 
   lifecycle {
     prevent_destroy = false
@@ -24,15 +24,11 @@ resource "aws_s3_bucket" "terraform_state" {
 
 terraform {  
   backend "s3" {  
-    bucket       = "Add-bucket-name"  
-    key          = "Add-path-of-terraform-state-file"
+    bucket       = "eks-bucket-mq"  
+    key          = "dev/terraform-state-file"
     region       = "us-east-1"  
-    encrypt      = true  
-    use_lockfile = true  #S3 native locking
   }  
 }
-
-
 
 module "vpc" {
   source = "./modules/vpc"
