@@ -1,12 +1,12 @@
 # VPC Configuration
 resource "aws_vpc" "eks_vpc" {
-  cidr_block           = define_vpc_cidr  # TODO: Define VPC CIDR in variables.tf
+  cidr_block           = var.vpc_cidr  
   enable_dns_hostnames = true  
   enable_dns_support   = true  
 
   tags = {
     Project     = "EKS-Cluster"
-    Environment = define-tag # TODO: Modify the environment tag
+    Environment = "dev" 
   }
 }
 
@@ -15,13 +15,13 @@ resource "aws_vpc" "eks_vpc" {
 resource "aws_subnet" "public" {
   count             = length(define_cidrs)
   vpc_id            = aws_vpc.eks_vpc.id
-  cidr_block        = public_subnet_cidrs[count.index] # TODO
+  cidr_block        = var.public_subnet_cidr[count.index] 
   availability_zone = add_availaability_zones[count.index]
 
-  map_public_ip_on_launch = true  # Automatically assign a public IP address to instances
+  map_public_ip_on_launch = true  
 
   tags = {
-    Name    = "public-subnet-${count.index + 1}"  # TODO: Customize naming pattern
+    Name    = "public-subnet-${count.index + 1}"  
     Tier    = "public"
   }
 }
@@ -29,15 +29,15 @@ resource "aws_subnet" "public" {
 
 
 resource "aws_subnet" "private" {
-  count             = length(define_cidrs)
+  count             = length(var.private_subnet_cidr)
   vpc_id            = aws_vpc.eks_vpc.id
-  cidr_block        = private_subnet_cidrs[count.index] # TODO: Add availability zone 
-  availability_zone = add_availaability_zones[count.index] # TODO: Add availability zone 
+  cidr_block        = var.private_subnet_cidr[count.index] 
+  availability_zone = var.availability_zones[count.index] 
 
-  map_public_ip_on_launch = true  # Automatically assign a public IP address to instances
+  map_public_ip_on_launch = true  
 
   tags = {
-    Name    = "private-subnet-${count.index + 1}"  # TODO: Customize naming pattern
+    Name    = "private-subnet-${count.index + 1}"  
     Tier    = "private"
   }
 }
@@ -48,23 +48,23 @@ resource "aws_internet_gateway" "int-gw" {
   vpc_id = aws_vpc.eks_vpc.id
 
   tags = {
-    Name = "" # TODO: Add tag name
+    Name = "igw" 
   }
 }
 
 
 # Elastic IPs
 resource "aws_eip" "eip-nat" {
-  count = length(add_public_subnet_cidrs)  # TODO: Add public subnet cidr
+  count = length(var.public_subnet_cidr)  
   domain = "vpc"
 
-    # TODO: Optionally add tags here for better resource tracking
+    
 }
 
 
 #NAT Gateway
 resource "aws_nat_gateway" "nat-gw" {
-  count         = length(add_public_subnet_cidrs)  # TODO: Add public subnet cidr
+  count         = length(var.public_subnet_cidr)  
   allocation_id = aws_eip.eip-nat[count.index].id  
   subnet_id     = aws_subnet.public[count.index].id
 
@@ -84,13 +84,13 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = ""    # TODO: Add tag name
+    Name = "route-table-public"    
   }
 }
 
 
 resource "aws_route_table" "private" {
-  count = length(define.private_subnet_cidr)   #   Replace with private subnet cidr
+  count = length(var.private_subnet_cidr)   
   vpc_id = aws_vpc.eks_vpc.id
 
   route {
@@ -99,22 +99,21 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "private-RT-${count.index + 1}"  # TODO: Customize prefix or suffix if needed
+    Name = "private-RT-${count.index + 1}"  
   }
 }
 
-
-
-resource "aws_route_table_association" "private" {
-  count          = length(var.private_subnet_cidr)
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[count.index].id
-}
-
-# Route Table Associations
+# Route Table Associations public
 resource "aws_route_table_association" "public" {
   count          = length(var.public_subnet_cidr)
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
+}
+
+# Route Table Associations private
+resource "aws_route_table_association" "private" {
+  count          = length(var.private_subnet_cidr)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[count.index].id
 }
 
